@@ -22,11 +22,11 @@ panel_img = pygame.image.load('img/Icons/panel.png').convert_alpha()
 
 #load background function
 def draw_bg():
-    screen.blit(background_img, (0,0))
+	screen.blit(background_img, (0,0))
 
 #load panel
 def draw_panel():
-    screen.blit(panel_img, (0, screen_height - bottom_panel))
+	screen.blit(panel_img, (0, screen_height - bottom_panel))
 
 
 #fighter class
@@ -39,11 +39,41 @@ class Fighter():
 		self.start_potions = potions
 		self.potions = potions
 		self.alive = True
-		img = pygame.image.load(f'img/{self.name}/Idle/0.png')
-		self.image = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
+		self.animation_list = []
+		self.frame_index = 0
+		self.action = 0 #0: idle, 1:attack, 2:hurt, 3:dead
+		self.update_time = pygame.time.get_ticks()
+		#load idle images
+		temp_list = []
+		for i in range(8):
+			img = pygame.image.load(f'img/{self.name}/Idle/{i}.png')
+			img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
+			temp_list.append(img)
+		self.animation_list.append(temp_list)
+		#load attack images
+		temp_list = []
+		for i in range(8):
+			img = pygame.image.load(f'img/{self.name}/Attack/{i}.png')
+			img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
+			temp_list.append(img)
+		self.animation_list.append(temp_list)
+		self.image = self.animation_list[self.action][self.frame_index]
 		self.rect = self.image.get_rect()
 		self.rect.center = (x, y)
 
+	def update(self):
+		animation_cooldown = 100
+		#handle animation
+		#update image
+		self.image = self.animation_list[self.action][self.frame_index]
+		if pygame.time.get_ticks() - self.update_time > animation_cooldown:
+			self.update_time = pygame.time.get_ticks()
+			self.frame_index += 1
+		#if the animation has run out then reset to start to loop
+		if self.frame_index >= len(self.animation_list[self.action]):
+			self.frame_index = 0
+			
+		
 
 	def draw(self):
 		screen.blit(self.image, self.rect)
@@ -62,23 +92,25 @@ bandit_list.append(bandit2)
 run = True
 while run:
 
-    clock.tick(fps)
+	clock.tick(fps)
 
-    #load bg
-    draw_bg()
+	#load bg
+	draw_bg()
 
-    #load panel
-    draw_panel()
+	#load panel
+	draw_panel()
 
-    #load fighters
-    knight.draw()
-    for bandit in bandit_list:
-          bandit.draw()
+	#load fighters
+	knight.update()
+	knight.draw()
+	for bandit in bandit_list:
+		bandit.update()
+		bandit.draw()
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
+	for event in pygame.event.get():
+		if event.type == pygame.QUIT:
+			run = False
 
-    pygame.display.update()
+	pygame.display.update()
 
 pygame.quit()
